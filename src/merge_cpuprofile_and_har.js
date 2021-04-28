@@ -1,6 +1,6 @@
 import { randomInRange } from './tools.js'
 
-// const mapObject = (obj, fn) => Object.fromEntries(Object.entries(obj).map(([key, val]) => [key, fn(val, key)]))
+const mapObject = (obj, fn) => Object.fromEntries(Object.entries(obj).map(([key, val]) => [key, fn(val, key)]))
 
 // some random contants to connect different nodes into a graph of a form that expected by DevTools
 // not sure if all of them are needed. expecially `frameTreeNodeId`
@@ -126,15 +126,15 @@ const add_request_nodes = (entry) => {
 	}
 
 	const startedDateTime = Math.round(entry._highResolutionTimestamp * 1000)
-	// const timings_ns = mapObject(entry.timings, (val, key) => val === -1 ? -1 : val * 1000)
+	const ts = mapObject(entry.timings, (val, key) => val === -1 ? 0 : val * 1000)
 	ResourceWillSendRequest.ts = startedDateTime
-	ResourceSendRequest.ts = startedDateTime + Math.round(entry.timings.send * 1000) // point 1
-	ResourceReceiveResponse.args.data.timing.sendStart = entry.timings.send
-	ResourceReceiveResponse.args.data.timing.receiveHeadersEnd = entry.timings.send + entry.timings.wait // point 3
-	ResourceReceiveResponse.args.data.timing.requestTime = (startedDateTime + entry.timings.send * 1000)/ 1000000, // point 2
-	ResourceReceiveResponse.ts = startedDateTime + Math.round((entry.timings.send + entry.timings.wait) * 1000)
-	ResourceReceivedData.ts = startedDateTime + Math.round((entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000) // mark
-	ResourceFinish.args.data.finishTime = (startedDateTime + (entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000)/ 1000000 // point 4
+	ResourceSendRequest.ts = startedDateTime + Math.round(ts.send) // point 1
+	ResourceReceiveResponse.args.data.timing.sendStart = ts.send / 1000
+	ResourceReceiveResponse.args.data.timing.receiveHeadersEnd = (ts.send + ts.wait) / 1000 // point 3
+	ResourceReceiveResponse.args.data.timing.requestTime = (startedDateTime + ts.send) / 1000000, // point 2
+	ResourceReceiveResponse.ts = startedDateTime + Math.round(ts.send + ts.wait)
+	ResourceReceivedData.ts = startedDateTime + Math.round(ts.send + ts.wait + ts.receive) // mark
+	ResourceFinish.args.data.finishTime = (startedDateTime + ts.send + ts.wait + ts.receive)/ 1000000 // point 4
 	ResourceFinish.ts = startedDateTime + Math.round(entry.time * 1000), // point 5
 
 	request_nodes.push(ResourceWillSendRequest)
