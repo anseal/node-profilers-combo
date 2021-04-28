@@ -17,7 +17,7 @@ const add_request_nodes = (entry) => {
 
 	const request_nodes = []
 
-	request_nodes.push({
+	const ResourceWillSendRequest = {
 		args: {
 			data: {
 				requestId
@@ -30,8 +30,9 @@ const add_request_nodes = (entry) => {
 		s: "p",
 		tid: pid_main,
 		ts: startedDateTime
-	})
-	request_nodes.push({
+	}
+
+	const ResourceSendRequest = {
 		args: {
 			data: {
 				frame,
@@ -48,8 +49,9 @@ const add_request_nodes = (entry) => {
 		s: "t",
 		tid: 1,
 		ts: startedDateTime + Math.round(entry.timings.send * 1000), // point 1
-	})
-	request_nodes.push({
+	}
+
+	const ResourceReceiveResponse = {
 		args: {
 			data: {
 				encodedDataLength: -1,
@@ -88,8 +90,9 @@ const add_request_nodes = (entry) => {
 		s: "t",
 		tid: 1,
 		ts: startedDateTime + Math.round((entry.timings.send + entry.timings.wait) * 1000),
-	})
-	request_nodes.push({
+	}
+
+	const ResourceReceivedData = {
 		args: {
 			data: {
 				encodedDataLength: entry.response.bodySize,
@@ -104,8 +107,9 @@ const add_request_nodes = (entry) => {
 		s: "t",
 		tid: 1,
 		ts: startedDateTime + Math.round((entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000), // mark
-	})
-	request_nodes.push({
+	}
+
+	const ResourceFinish = {
 		args: {
 			data: {
 				decodedBodyLength: entry.response.bodySize,
@@ -122,7 +126,14 @@ const add_request_nodes = (entry) => {
 		s: "t",
 		tid: 1,
 		ts: startedDateTime + duration, // point 5
-	})
+	}
+
+	request_nodes.push(ResourceWillSendRequest)
+	request_nodes.push(ResourceSendRequest)
+	request_nodes.push(ResourceReceiveResponse)
+	request_nodes.push(ResourceReceivedData)
+	request_nodes.push(ResourceFinish)
+
 	return request_nodes
 }
 
