@@ -31,7 +31,6 @@ const add_request_nodes = (entry) => {
 		tid: pid_main,
 		ts: undefined,
 	}
-	ResourceWillSendRequest.ts = startedDateTime
 
 	const ResourceSendRequest = {
 		args: {
@@ -51,7 +50,6 @@ const add_request_nodes = (entry) => {
 		tid: 1,
 		ts: undefined,
 	}
-	ResourceSendRequest.ts = startedDateTime + Math.round(entry.timings.send * 1000) // point 1
 
 	const ResourceReceiveResponse = {
 		args: {
@@ -93,10 +91,6 @@ const add_request_nodes = (entry) => {
 		tid: 1,
 		ts: undefined,
 	}
-	ResourceReceiveResponse.args.data.timing.sendStart = entry.timings.send
-	ResourceReceiveResponse.args.data.timing.receiveHeadersEnd = entry.timings.send + entry.timings.wait // point 3
-	ResourceReceiveResponse.args.data.timing.requestTime = (startedDateTime + entry.timings.send * 1000)/ 1000000, // point 2
-	ResourceReceiveResponse.ts = startedDateTime + Math.round((entry.timings.send + entry.timings.wait) * 1000)
 
 	const ResourceReceivedData = {
 		args: {
@@ -114,7 +108,6 @@ const add_request_nodes = (entry) => {
 		tid: 1,
 		ts: undefined,
 	}
-	ResourceReceivedData.ts = startedDateTime + Math.round((entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000) // mark
 
 	const ResourceFinish = {
 		args: {
@@ -134,6 +127,14 @@ const add_request_nodes = (entry) => {
 		tid: 1,
 		ts: undefined,
 	}
+
+	ResourceWillSendRequest.ts = startedDateTime
+	ResourceSendRequest.ts = startedDateTime + Math.round(entry.timings.send * 1000) // point 1
+	ResourceReceiveResponse.args.data.timing.sendStart = entry.timings.send
+	ResourceReceiveResponse.args.data.timing.receiveHeadersEnd = entry.timings.send + entry.timings.wait // point 3
+	ResourceReceiveResponse.args.data.timing.requestTime = (startedDateTime + entry.timings.send * 1000)/ 1000000, // point 2
+	ResourceReceiveResponse.ts = startedDateTime + Math.round((entry.timings.send + entry.timings.wait) * 1000)
+	ResourceReceivedData.ts = startedDateTime + Math.round((entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000) // mark
 	ResourceFinish.args.data.finishTime = (startedDateTime + (entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000)/ 1000000 // point 4
 	ResourceFinish.ts = startedDateTime + duration, // point 5
 
