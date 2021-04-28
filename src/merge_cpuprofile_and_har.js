@@ -29,8 +29,9 @@ const add_request_nodes = (entry) => {
 		pid: pid_main,
 		s: "p",
 		tid: pid_main,
-		ts: startedDateTime
+		ts: undefined,
 	}
+	ResourceWillSendRequest.ts = startedDateTime
 
 	const ResourceSendRequest = {
 		args: {
@@ -48,8 +49,9 @@ const add_request_nodes = (entry) => {
 		pid: pid_secondary,
 		s: "t",
 		tid: 1,
-		ts: startedDateTime + Math.round(entry.timings.send * 1000), // point 1
+		ts: undefined,
 	}
+	ResourceSendRequest.ts = startedDateTime + Math.round(entry.timings.send * 1000) // point 1
 
 	const ResourceReceiveResponse = {
 		args: {
@@ -71,10 +73,10 @@ const add_request_nodes = (entry) => {
 					sslStart: -1, //514.888,
 					sslEnd: -1, //1250.053,
 					connectEnd: -1, //1250.068,
-					sendStart: entry.timings.send, //1250.371,
+					sendStart: undefined,
 					sendEnd: -1, //1250.785,
-					receiveHeadersEnd: entry.timings.send + entry.timings.wait, // point 3
-					requestTime: (startedDateTime + entry.timings.send * 1000)/ 1000000, // point 2
+					receiveHeadersEnd: undefined,
+					requestTime: undefined,
 
 					proxyEnd: -1,
 					proxyStart: -1,
@@ -89,8 +91,12 @@ const add_request_nodes = (entry) => {
 		pid: pid_secondary,
 		s: "t",
 		tid: 1,
-		ts: startedDateTime + Math.round((entry.timings.send + entry.timings.wait) * 1000),
+		ts: undefined,
 	}
+	ResourceReceiveResponse.args.data.timing.sendStart = entry.timings.send
+	ResourceReceiveResponse.args.data.timing.receiveHeadersEnd = entry.timings.send + entry.timings.wait // point 3
+	ResourceReceiveResponse.args.data.timing.requestTime = (startedDateTime + entry.timings.send * 1000)/ 1000000, // point 2
+	ResourceReceiveResponse.ts = startedDateTime + Math.round((entry.timings.send + entry.timings.wait) * 1000)
 
 	const ResourceReceivedData = {
 		args: {
@@ -106,8 +112,9 @@ const add_request_nodes = (entry) => {
 		pid: pid_secondary,
 		s: "t",
 		tid: 1,
-		ts: startedDateTime + Math.round((entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000), // mark
+		ts: undefined,
 	}
+	ResourceReceivedData.ts = startedDateTime + Math.round((entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000) // mark
 
 	const ResourceFinish = {
 		args: {
@@ -116,7 +123,7 @@ const add_request_nodes = (entry) => {
 				didFail: false,
 				encodedDataLength: entry.response.content.compression,
 				requestId,
-				finishTime: (startedDateTime + (entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000)/ 1000000, // point 4
+				finishTime: undefined,
 			}
 		},
 		cat: "devtools.timeline",
@@ -125,8 +132,10 @@ const add_request_nodes = (entry) => {
 		pid: pid_secondary,
 		s: "t",
 		tid: 1,
-		ts: startedDateTime + duration, // point 5
+		ts: undefined,
 	}
+	ResourceFinish.args.data.finishTime = (startedDateTime + (entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000)/ 1000000 // point 4
+	ResourceFinish.ts = startedDateTime + duration, // point 5
 
 	request_nodes.push(ResourceWillSendRequest)
 	request_nodes.push(ResourceSendRequest)
