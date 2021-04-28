@@ -127,15 +127,24 @@ const add_request_nodes = (entry) => {
 
 	const startedDateTime = Math.round(entry._highResolutionTimestamp * 1000)
 	const ts = mapObject(entry.timings, (val, key) => val === -1 ? 0 : val * 1000)
+
 	ResourceWillSendRequest.ts = startedDateTime
-	ResourceSendRequest.ts = startedDateTime + Math.round(ts.send) // point 1
-	ResourceReceiveResponse.args.data.timing.sendStart = ts.send / 1000
-	ResourceReceiveResponse.args.data.timing.receiveHeadersEnd = (ts.send + ts.wait) / 1000 // point 3
+
+	ResourceSendRequest.ts = startedDateTime + Math.round(ts.send) // mark 'Send Request'
+	// ===
+	ResourceReceiveResponse.args.data.timing.sendStart = ts.send / 1000 // point 1
+
 	ResourceReceiveResponse.args.data.timing.requestTime = (startedDateTime + ts.send) / 1000000, // point 2
-	ResourceReceiveResponse.ts = startedDateTime + Math.round(ts.send + ts.wait)
-	ResourceReceivedData.ts = startedDateTime + Math.round(ts.send + ts.wait + ts.receive) // mark
+
+	ResourceReceiveResponse.ts = startedDateTime + Math.round(ts.send + ts.wait) // mark 'Recieve Response'
+	// ===
+	ResourceReceiveResponse.args.data.timing.receiveHeadersEnd = (ts.send + ts.wait) / 1000 // point 3
+
+	ResourceReceivedData.ts = startedDateTime + Math.round(ts.send + ts.wait + ts.receive) // mark 'Recieve Data'
+	// ===
 	ResourceFinish.args.data.finishTime = (startedDateTime + ts.send + ts.wait + ts.receive)/ 1000000 // point 4
-	ResourceFinish.ts = startedDateTime + Math.round(entry.time * 1000), // point 5
+
+	ResourceFinish.ts = startedDateTime + Math.round(entry.time * 1000), // point 5, mark 'Finish Loading'
 
 	request_nodes.push(ResourceWillSendRequest)
 	request_nodes.push(ResourceSendRequest)
