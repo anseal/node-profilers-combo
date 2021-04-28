@@ -72,7 +72,7 @@ const add_request_nodes = (entry) => {
 					sendStart: entry.timings.send, //1250.371,
 					sendEnd: -1, //1250.785,
 					receiveHeadersEnd: entry.timings.send + entry.timings.wait, // point 3
-					requestTime: (startedDateTime + entry.timings.send * 1000 + 100)/ 1000000, // point 2
+					requestTime: (startedDateTime + entry.timings.send * 1000)/ 1000000, // point 2
 
 					proxyEnd: -1,
 					proxyStart: -1,
