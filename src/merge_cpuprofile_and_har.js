@@ -1,3 +1,5 @@
+import { randomInRange } from './tools.js'
+
 // const mapObject = (obj, fn) => Object.fromEntries(Object.entries(obj).map(([key, val]) => [key, fn(val, key)]))
 
 // some random contants to connect different nodes into a graph of a form that expected by DevTools

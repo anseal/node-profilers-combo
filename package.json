@@ -1,6 +1,6 @@
 {
   "name": "node-profilers-combo",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Writes .har & .cpuprofile and combines them into a .json file suitable for Performance tab of Chrome DevTools",
   "type": "module",
   "main": "index.js",
@@ -23,7 +23,12 @@
     "inspector",
     "profiler",
     "performance",
-    "devtools"
+    "devtools",
+    "request",
+    "intercept",
+    "http",
+    "https",
+    "low-level"
   ],
   "author": "anseal",
   "license": "MIT"
