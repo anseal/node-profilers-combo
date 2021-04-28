@@ -2,6 +2,7 @@
   "name": "node-profilers-combo",
   "version": "1.0.0",
   "description": "Writes .har & .cpuprofile and combines them into a .json file suitable for Performance tab of Chrome DevTools",
+  "type": "module",
   "main": "index.js",
   "files": [
     "index.js",
