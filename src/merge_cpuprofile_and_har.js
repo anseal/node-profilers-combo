@@ -11,9 +11,6 @@ const frameTreeNodeId = 121
 
 const add_request_nodes = (entry) => {
 	const requestId = randomInRange(1_000,2_000)
-	const startedDateTime = Math.round(entry._highResolutionTimestamp * 1000)
-	const duration = Math.round(entry.time * 1000)
-	// const timings_ns = mapObject(entry.timings, (val, key) => val === -1 ? -1 : val * 1000)
 
 	const request_nodes = []
 
@@ -128,6 +125,8 @@ const add_request_nodes = (entry) => {
 		ts: undefined,
 	}
 
+	const startedDateTime = Math.round(entry._highResolutionTimestamp * 1000)
+	// const timings_ns = mapObject(entry.timings, (val, key) => val === -1 ? -1 : val * 1000)
 	ResourceWillSendRequest.ts = startedDateTime
 	ResourceSendRequest.ts = startedDateTime + Math.round(entry.timings.send * 1000) // point 1
 	ResourceReceiveResponse.args.data.timing.sendStart = entry.timings.send
@@ -136,7 +135,7 @@ const add_request_nodes = (entry) => {
 	ResourceReceiveResponse.ts = startedDateTime + Math.round((entry.timings.send + entry.timings.wait) * 1000)
 	ResourceReceivedData.ts = startedDateTime + Math.round((entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000) // mark
 	ResourceFinish.args.data.finishTime = (startedDateTime + (entry.timings.send + entry.timings.wait + entry.timings.receive) * 1000)/ 1000000 // point 4
-	ResourceFinish.ts = startedDateTime + duration, // point 5
+	ResourceFinish.ts = startedDateTime + Math.round(entry.time * 1000), // point 5
 
 	request_nodes.push(ResourceWillSendRequest)
 	request_nodes.push(ResourceSendRequest)
