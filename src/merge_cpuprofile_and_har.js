@@ -153,6 +153,8 @@ const add_request_nodes = (entry) => {
 	ResourceFinish.ts = startedDateTime + Math.round(entry.time * 1000) // point 5, mark 'Finish Loading'
 
 	const extra_nodes = (type, t1, t2) => {
+		if( t1 === t2 ) return []
+
 		const requestId = randomInRange(1_000,2_000)
 		const send = node_send(requestId, 'GET', type + ":" + entry.request.url)
 		send.ts = t1
