@@ -166,19 +166,31 @@ const add_request_nodes = (entry) => {
 		]
 	}
 
+	/*
+	const created = startedDateTime
+	const started = created + ts.blocked
+	const dns_resolved = started + ts.dns
+	const connected = dns_resolved + ts.connect - ts.ssl
+	const connected_with_ssl = connected + ts.ssl
+	const sent = connected_with_ssl + ts.send
+	const first_byte = sent + ts.wait
+	const loaded = first_byte + ts.receive
+	const closed = loaded + (entry._raw_timings?.on_close||0)
+	*/
+
 	return [
 		ResourceWillSendRequest,
 		ResourceSendRequest,
 		ResourceReceiveResponse,
 		ResourceReceivedData,
 		ResourceFinish,
-		...extra_nodes("QUEUED",  startedDateTime, startedDateTime + ts.blocked),
-		...extra_nodes("DNS",     startedDateTime + ts.blocked, startedDateTime + ts.blocked + ts.dns),
-		...extra_nodes("SSL",     startedDateTime + ts.blocked + ts.dns + ts.connect - ts.ssl, startedDateTime + ts.blocked + ts.dns + ts.connect),
-		...extra_nodes("CONNECT", startedDateTime + ts.blocked + ts.dns, startedDateTime + ts.blocked + ts.dns + ts.connect - ts.ssl),
-		...extra_nodes("SEND",    startedDateTime + ts.blocked + ts.dns + ts.connect, startedDateTime + ts.blocked + ts.dns + ts.connect + ts.send),
-		...extra_nodes("WAIT",    startedDateTime + ts.blocked + ts.dns + ts.connect + ts.send, startedDateTime + ts.blocked + ts.dns + ts.connect + ts.send + ts.wait),
-		...extra_nodes("LOAD",    startedDateTime + ts.blocked + ts.dns + ts.connect + ts.send + ts.wait, startedDateTime + ts.blocked + ts.dns + ts.connect + ts.send + ts.wait + ts.receive),
+		...extra_nodes("QUEUED",  time, time += ts.blocked),
+		...extra_nodes("DNS",     time, time += ts.dns),
+		...extra_nodes("CONNECT", time, time += (ts.connect - ts.ssl)),
+		...extra_nodes("SSL",     time, time += ts.ssl),
+		...extra_nodes("SEND",    time, time += ts.send),
+		...extra_nodes("WAIT",    time, time += ts.wait),
+		...extra_nodes("LOAD",    time, time += ts.receive),
 	]
 }
 
