@@ -9,20 +9,21 @@ const pid_secondary = 13557
 const frame = "4D437AF9B2B977363FF6DA4BD7A07C80"
 const frameTreeNodeId = 121
 
-const node_will_send = (requestId) => ({
-	args: {
-		data: {
-			requestId
-		}
-	},
-	cat: "devtools.timeline",
-	name: "ResourceWillSendRequest",
-	ph: "I",
-	pid: pid_main,
-	s: "p",
-	tid: pid_main,
-	ts: undefined,
-})
+// Looks like this node is used only when resources are loaded by the browser
+// const node_will_send = (requestId) => ({
+// 	args: {
+// 		data: {
+// 			requestId
+// 		}
+// 	},
+// 	cat: "devtools.timeline",
+// 	name: "ResourceWillSendRequest",
+// 	ph: "I",
+// 	pid: pid_main,
+// 	s: "p",
+// 	tid: pid_main,
+// 	ts: undefined,
+// })
 
 const node_send = (requestId, requestMethod, url) => ({
 	args: {
@@ -57,14 +58,14 @@ const node_response = (requestId, mimeType, statusCode) => ({
 			timing: {
 				pushStart: 0, // TODO: no idea what is it
 				pushEnd: 0, // TODO: no idea what is it
-				dnsStart: -1, //0.316,
-				dnsEnd: -1, //514.626,
-				connectStart: -1, //514.626,
-				sslStart: -1, //514.888,
-				sslEnd: -1, //1250.053,
-				connectEnd: -1, //1250.068,
+				dnsStart: -1,
+				dnsEnd: -1,
+				connectStart: -1,
+				sslStart: -1,
+				sslEnd: -1,
+				connectEnd: -1,
 				sendStart: undefined,
-				sendEnd: -1, //1250.785,
+				sendEnd: -1,
 				receiveHeadersEnd: undefined,
 				requestTime: undefined,
 
@@ -123,7 +124,6 @@ const node_finish = (requestId, decodedBodyLength, encodedDataLength) => ({
 const add_request_nodes = (entry) => {
 	const requestId = randomInRange(1_000,2_000)
 
-	const ResourceWillSendRequest = node_will_send(requestId)
 	const ResourceSendRequest = node_send(requestId, entry.request.method, entry.request.url)
 	const ResourceReceiveResponse = node_response(requestId, entry.response.content.mimeType, entry.response.status)
 	const ResourceReceivedData = node_data(requestId, entry.response.bodySize)
@@ -133,42 +133,8 @@ const add_request_nodes = (entry) => {
 
 	const startedDateTime = Math.round(entry._highResolutionTimestamp * 1000)
 	const ts = mapObject(entry.timings, (val, key) => val === -1 ? 0 : val * 1000)
+	const timings = ResourceReceiveResponse.args.data.timing
 
-	ResourceWillSendRequest.ts = startedDateTime
-
-	ResourceSendRequest.ts = startedDateTime + Math.round(ts.send) // mark 'Send Request'
-	// ===
-	ResourceReceiveResponse.args.data.timing.sendStart = ts.send / 1000 // point 1
-
-	ResourceReceiveResponse.args.data.timing.requestTime = (startedDateTime + ts.send) / 1000000 // point 2
-
-	ResourceReceiveResponse.ts = startedDateTime + Math.round(ts.send + ts.wait) // mark 'Recieve Response'
-	// ===
-	ResourceReceiveResponse.args.data.timing.receiveHeadersEnd = (ts.send + ts.wait) / 1000 // point 3
-
-	ResourceReceivedData.ts = startedDateTime + Math.round(ts.send + ts.wait + ts.receive) // mark 'Recieve Data'
-	// ===
-	ResourceFinish.args.data.finishTime = (startedDateTime + ts.send + ts.wait + ts.receive)/ 1000000 // point 4
-
-	ResourceFinish.ts = startedDateTime + Math.round(entry.time * 1000) // point 5, mark 'Finish Loading'
-
-	const extra_nodes = (type, t1, t2) => {
-		if( t1 === t2 ) return []
-
-		const requestId = randomInRange(1_000,2_000)
-		const send = node_send(requestId, 'GET', type + ":" + entry.request.url)
-		send.ts = t1
-		const finish = node_finish(requestId, 1, 1)
-		finish.ts = t2
-		return [
-			send,
-			// node_response(requestId, 'text/html', 200),
-			// node_data(requestId, 1),
-			finish,
-		]
-	}
-
-	/*
 	const created = startedDateTime
 	const started = created + ts.blocked
 	const dns_resolved = started + ts.dns
@@ -178,13 +144,78 @@ const add_request_nodes = (entry) => {
 	const first_byte = sent + ts.wait
 	const loaded = first_byte + ts.receive
 	const closed = loaded + (entry._raw_timings?.on_close||0)
-	*/
 
+	// point 1
+	ResourceSendRequest.ts = startedDateTime // mark 'Send Request'
+	// TODO: do we need this?
+	// ResourceReceiveResponse.args.data.timing.sendStart = ts.blocked / 1000
+
+	// nanoseconds relative to req start
+	// TODO: don't know if these are shown in thte GUI, and thus have no idea it this part of code is correct
+	// timings.dnsStart = entry._raw_timings.on_socket - entry._raw_timings.on_start // TODO: on_end - on_start ?
+	// timings.dnsEnd = entry._raw_timings.on_lookup - entry._raw_timings.on_start
+	timings.connectStart = entry._raw_timings.on_lookup - entry._raw_timings.on_start // almost indistinguashable from `dnsEnd`
+	if( entry._raw_timings.on_secureConnect ) {
+		// timings.sslStart = entry._raw_timings.on_connect - entry._raw_timings.on_start
+		// timings.sslEnd = entry._raw_timings.on_secureConnect - entry._raw_timings.on_start
+		timings.connectEnd = entry._raw_timings.on_secureConnect - entry._raw_timings.on_start // almost indistinguashable from `sslEnd`
+		timings.sendStart = entry._raw_timings.on_secureConnect - entry._raw_timings.on_start // almost indistinguashable from `connectEnd`
+	} else {
+		timings.connectEnd = entry._raw_timings.on_connect - entry._raw_timings.on_start
+		timings.sendStart = entry._raw_timings.on_connect - entry._raw_timings.on_start // almost indistinguashable from `connectEnd`
+	}
+	timings.sendEnd = entry._raw_timings.on_finish - entry._raw_timings.on_start
+	// TODO: looks like `on_responce` fires after headers've been recieved. is it really so?
+	// timings.receiveHeadersEnd = entry._raw_timings.on_responce - entry._raw_timings.on_start
+
+	// but not this one. this is absolute time in seconds
+	// point 2 // TODO: mark 'requestStart'
+	timings.requestTime = (startedDateTime + ts.send) / 1000000
+		// < ResourceReceiveResponse.ts
+
+	// point 3
+	// relative nanoseconds
+	// TODO: I guessed it's eq to mark 'Recieve Response', but it is not... - imprecision?
+	timings.receiveHeadersEnd = (first_byte - created) / 1000
+
+	// mark 'Recieve Response'
+	ResourceReceiveResponse.ts = Math.round(first_byte)
+		// < finishTime
+
+	// point 4
+	// absolute seconds
+	ResourceFinish.args.data.finishTime = loaded / 1000000
+		// < ResourceFinish.ts
+
+	// point 5, mark 'Finish Loading'
+	// absolute milliseconds
+	ResourceFinish.ts = Math.round(closed)
+
+	// TODO: looks like there can be several 'Recieve Data' marks - `on_data` array?
+	// strangely enougth 'Recieve Data' marks can appear after 'point 4'
+	// ResourceReceivedData.ts = startedDateTime + Math.round(ts.send + ts.wait + ts.receive)
+
+	const extra_nodes = (type, t1, t2) => {
+		if( t1 === t2 ) return []
+
+		const requestId = randomInRange(1_000,2_000)
+		const send = node_send(requestId, 'GET', type + ":" + entry.request.url)
+		send.ts = Math.round(t1)
+		const finish = node_finish(requestId, 1, 1)
+		finish.ts = Math.round(t2)
+		return [
+			send,
+			// node_response(requestId, 'text/html', 200),
+			// node_data(requestId, 1),
+			finish,
+		]
+	}
+
+	let time = created
 	return [
-		ResourceWillSendRequest,
 		ResourceSendRequest,
 		ResourceReceiveResponse,
-		ResourceReceivedData,
+		// ResourceReceivedData,
 		ResourceFinish,
 		...extra_nodes("QUEUED",  time, time += ts.blocked),
 		...extra_nodes("DNS",     time, time += ts.dns),
@@ -193,6 +224,7 @@ const add_request_nodes = (entry) => {
 		...extra_nodes("SEND",    time, time += ts.send),
 		...extra_nodes("WAIT",    time, time += ts.wait),
 		...extra_nodes("LOAD",    time, time += ts.receive),
+		...extra_nodes("CLOSE",   time, closed),
 	]
 }
 
