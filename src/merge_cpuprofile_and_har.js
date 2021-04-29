@@ -9,121 +9,127 @@ const pid_secondary = 13557
 const frame = "4D437AF9B2B977363FF6DA4BD7A07C80"
 const frameTreeNodeId = 121
 
+const node_will_send = (requestId) => ({
+	args: {
+		data: {
+			requestId
+		}
+	},
+	cat: "devtools.timeline",
+	name: "ResourceWillSendRequest",
+	ph: "I",
+	pid: pid_main,
+	s: "p",
+	tid: pid_main,
+	ts: undefined,
+})
+
+const node_send = (requestId, requestMethod, url) => ({
+	args: {
+		data: {
+			frame,
+			priority: "High",
+			requestId,
+			requestMethod,
+			url,
+		}
+	},
+	cat: "devtools.timeline",
+	name: "ResourceSendRequest",
+	ph: "I",
+	pid: pid_secondary,
+	s: "t",
+	tid: 1,
+	ts: undefined,
+})
+
+const node_response = (requestId, mimeType, statusCode) => ({
+	args: {
+		data: {
+			encodedDataLength: -1,
+			frame,
+			fromCache: false,
+			fromServiceWorker: false,
+			mimeType,
+			requestId,
+			// responseTime: Date.getTime() but float. Not really usefull, as it's an absolute time... which is actually good... but most other times are relative
+			statusCode,
+			timing: {
+				pushStart: 0, // TODO: no idea what is it
+				pushEnd: 0, // TODO: no idea what is it
+				dnsStart: -1, //0.316,
+				dnsEnd: -1, //514.626,
+				connectStart: -1, //514.626,
+				sslStart: -1, //514.888,
+				sslEnd: -1, //1250.053,
+				connectEnd: -1, //1250.068,
+				sendStart: undefined,
+				sendEnd: -1, //1250.785,
+				receiveHeadersEnd: undefined,
+				requestTime: undefined,
+
+				proxyEnd: -1,
+				proxyStart: -1,
+				workerReady: -1,
+				workerStart: -1,
+			}
+		}
+	},
+	cat: "devtools.timeline",
+	name: "ResourceReceiveResponse",
+	ph: "I",
+	pid: pid_secondary,
+	s: "t",
+	tid: 1,
+	ts: undefined,
+})
+
+const node_data = (requestId, encodedDataLength) => ({
+	args: {
+		data: {
+			encodedDataLength,
+			frame,
+			requestId,
+		}
+	},
+	cat: "devtools.timeline",
+	name: "ResourceReceivedData",
+	ph: "I",
+	pid: pid_secondary,
+	s: "t",
+	tid: 1,
+	ts: undefined,
+})
+
+const node_finish = (requestId, decodedBodyLength, encodedDataLength) => ({
+	args: {
+		data: {
+			decodedBodyLength,
+			didFail: false,
+			encodedDataLength,
+			requestId,
+			finishTime: undefined,
+		}
+	},
+	cat: "devtools.timeline",
+	name: "ResourceFinish",
+	ph: "I",
+	pid: pid_secondary,
+	s: "t",
+	tid: 1,
+	ts: undefined,
+})
+
 const add_request_nodes = (entry) => {
 	const requestId = randomInRange(1_000,2_000)
 
-	const request_nodes = []
-
-	const ResourceWillSendRequest = {
-		args: {
-			data: {
-				requestId
-			}
-		},
-		cat: "devtools.timeline",
-		name: "ResourceWillSendRequest",
-		ph: "I",
-		pid: pid_main,
-		s: "p",
-		tid: pid_main,
-		ts: undefined,
-	}
-
-	const ResourceSendRequest = {
-		args: {
-			data: {
-				frame,
-				priority: "High",
-				requestId,
-				requestMethod: entry.request.method,
-				url: entry.request.url
-			}
-		},
-		cat: "devtools.timeline",
-		name: "ResourceSendRequest",
-		ph: "I",
-		pid: pid_secondary,
-		s: "t",
-		tid: 1,
-		ts: undefined,
-	}
-
-	const ResourceReceiveResponse = {
-		args: {
-			data: {
-				encodedDataLength: -1,
-				frame,
-				fromCache: false,
-				fromServiceWorker: false,
-				mimeType: "text/html",
-				requestId,
-				// responseTime: Date.getTime() but float. Not really usefull, as it's an absolute time... which is actually good... but most other times are relative
-				statusCode: entry.response.status,
-				timing: {
-					pushStart: 0, // TODO: no idea what is it
-					pushEnd: 0, // TODO: no idea what is it
-					dnsStart: -1, //0.316,
-					dnsEnd: -1, //514.626,
-					connectStart: -1, //514.626,
-					sslStart: -1, //514.888,
-					sslEnd: -1, //1250.053,
-					connectEnd: -1, //1250.068,
-					sendStart: undefined,
-					sendEnd: -1, //1250.785,
-					receiveHeadersEnd: undefined,
-					requestTime: undefined,
-
-					proxyEnd: -1,
-					proxyStart: -1,
-					workerReady: -1,
-					workerStart: -1,
-				}
-			}
-		},
-		cat: "devtools.timeline",
-		name: "ResourceReceiveResponse",
-		ph: "I",
-		pid: pid_secondary,
-		s: "t",
-		tid: 1,
-		ts: undefined,
-	}
-
-	const ResourceReceivedData = {
-		args: {
-			data: {
-				encodedDataLength: entry.response.bodySize,
-				frame,
-				requestId,
-			}
-		},
-		cat: "devtools.timeline",
-		name: "ResourceReceivedData",
-		ph: "I",
-		pid: pid_secondary,
-		s: "t",
-		tid: 1,
-		ts: undefined,
-	}
-
-	const ResourceFinish = {
-		args: {
-			data: {
-				decodedBodyLength: entry.response.bodySize,
-				didFail: false,
-				encodedDataLength: entry.response.content.compression,
-				requestId,
-				finishTime: undefined,
-			}
-		},
-		cat: "devtools.timeline",
-		name: "ResourceFinish",
-		ph: "I",
-		pid: pid_secondary,
-		s: "t",
-		tid: 1,
-		ts: undefined,
-	}
+	const ResourceWillSendRequest = node_will_send(requestId)
+	const ResourceSendRequest = node_send(requestId, entry.request.method, entry.request.url)
+	const ResourceReceiveResponse = node_response(requestId, entry.response.content.mimeType, entry.response.status)
+	const ResourceReceivedData = node_data(requestId, entry.response.bodySize)
+	// TODO: not sure that `encodedDataLength === entry.response.content.compression`
+	// ... probably not, because HAR specs says: 'compression - number of **saved** bytes'
+	const ResourceFinish = node_finish(requestId, entry.response.bodySize, entry.response.content.compression)
 
 	const startedDateTime = Math.round(entry._highResolutionTimestamp * 1000)
 	const ts = mapObject(entry.timings, (val, key) => val === -1 ? 0 : val * 1000)
@@ -134,7 +140,7 @@ const add_request_nodes = (entry) => {
 	// ===
 	ResourceReceiveResponse.args.data.timing.sendStart = ts.send / 1000 // point 1
 
-	ResourceReceiveResponse.args.data.timing.requestTime = (startedDateTime + ts.send) / 1000000, // point 2
+	ResourceReceiveResponse.args.data.timing.requestTime = (startedDateTime + ts.send) / 1000000 // point 2
 
 	ResourceReceiveResponse.ts = startedDateTime + Math.round(ts.send + ts.wait) // mark 'Recieve Response'
 	// ===
@@ -144,15 +150,15 @@ const add_request_nodes = (entry) => {
 	// ===
 	ResourceFinish.args.data.finishTime = (startedDateTime + ts.send + ts.wait + ts.receive)/ 1000000 // point 4
 
-	ResourceFinish.ts = startedDateTime + Math.round(entry.time * 1000), // point 5, mark 'Finish Loading'
+	ResourceFinish.ts = startedDateTime + Math.round(entry.time * 1000) // point 5, mark 'Finish Loading'
 
-	request_nodes.push(ResourceWillSendRequest)
-	request_nodes.push(ResourceSendRequest)
-	request_nodes.push(ResourceReceiveResponse)
-	request_nodes.push(ResourceReceivedData)
-	request_nodes.push(ResourceFinish)
-
-	return request_nodes
+	return [
+		ResourceWillSendRequest,
+		ResourceSendRequest,
+		ResourceReceiveResponse,
+		ResourceReceivedData,
+		ResourceFinish,
+	]
 }
 
 export const merge_cpuprofile_and_har = (script_url, cpuprofile, har) => {
