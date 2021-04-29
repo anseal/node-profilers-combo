@@ -33,11 +33,12 @@ export class HttpInspector {
 			// If both url and options are specified, the objects are merged, with the options properties taking precedence.
 			// The optional callback parameter will be added as a one-time listener for the 'response' event.
 			// TODO: вероятно надо это реализовать самому
-	
+
 			const request = original_request_func.call(this, ...args)
 
 			if( inspector.inspect === false ) return request
 
+			// TODO: move before `original_request_func` for more precise mesurments (around 5ms-10ms)
 			callbacks.on_start?.(request, ...args)
 
 			if( callbacks.on_write ) {

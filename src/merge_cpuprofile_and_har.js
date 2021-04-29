@@ -152,12 +152,33 @@ const add_request_nodes = (entry) => {
 
 	ResourceFinish.ts = startedDateTime + Math.round(entry.time * 1000) // point 5, mark 'Finish Loading'
 
+	const extra_nodes = (type, t1, t2) => {
+		const requestId = randomInRange(1_000,2_000)
+		const send = node_send(requestId, 'GET', type + ":" + entry.request.url)
+		send.ts = t1
+		const finish = node_finish(requestId, 1, 1)
+		finish.ts = t2
+		return [
+			send,
+			// node_response(requestId, 'text/html', 200),
+			// node_data(requestId, 1),
+			finish,
+		]
+	}
+
 	return [
 		ResourceWillSendRequest,
 		ResourceSendRequest,
 		ResourceReceiveResponse,
 		ResourceReceivedData,
 		ResourceFinish,
+		...extra_nodes("QUEUED",  startedDateTime, startedDateTime + ts.blocked),
+		...extra_nodes("DNS",     startedDateTime + ts.blocked, startedDateTime + ts.blocked + ts.dns),
+		...extra_nodes("SSL",     startedDateTime + ts.blocked + ts.dns + ts.connect - ts.ssl, startedDateTime + ts.blocked + ts.dns + ts.connect),
+		...extra_nodes("CONNECT", startedDateTime + ts.blocked + ts.dns, startedDateTime + ts.blocked + ts.dns + ts.connect - ts.ssl),
+		...extra_nodes("SEND",    startedDateTime + ts.blocked + ts.dns + ts.connect, startedDateTime + ts.blocked + ts.dns + ts.connect + ts.send),
+		...extra_nodes("WAIT",    startedDateTime + ts.blocked + ts.dns + ts.connect + ts.send, startedDateTime + ts.blocked + ts.dns + ts.connect + ts.send + ts.wait),
+		...extra_nodes("LOAD",    startedDateTime + ts.blocked + ts.dns + ts.connect + ts.send + ts.wait, startedDateTime + ts.blocked + ts.dns + ts.connect + ts.send + ts.wait + ts.receive),
 	]
 }
 
