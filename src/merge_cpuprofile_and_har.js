@@ -135,6 +135,7 @@ const add_request_nodes = (entry) => {
 	const ts = mapObject(entry.timings, (val, key) => val === -1 ? 0 : val * 1000)
 	const timings = ResourceReceiveResponse.args.data.timing
 
+	// absolute times in nanoseconds
 	const created = startedDateTime
 	const started = created + ts.blocked
 	const dns_resolved = started + ts.dns
@@ -144,6 +145,8 @@ const add_request_nodes = (entry) => {
 	const first_byte = sent + ts.wait
 	const loaded = first_byte + ts.receive
 	const closed = loaded + (entry._raw_timings?.on_close||0)
+
+	const mysterious_delta = 0
 
 	// point 1
 	ResourceSendRequest.ts = startedDateTime // mark 'Send Request'
@@ -168,15 +171,21 @@ const add_request_nodes = (entry) => {
 	// TODO: looks like `on_responce` fires after headers've been recieved. is it really so?
 	// timings.receiveHeadersEnd = entry._raw_timings.on_responce - entry._raw_timings.on_start
 
-	// but not this one. this is absolute time in seconds
 	// point 2 // TODO: mark 'requestStart'
-	timings.requestTime = (startedDateTime + ts.send) / 1000000
+	// but not this one. this is absolute time in seconds and...
+	// ...its crazy! can't say it's a bug, because, well, it works... somehow. but:
+	// 1) if I set it to `startedDateTime` - it'll point to the `connected_with_ssl` time (can think of it as `first byte sent`)
+	//    This is kind of obvious after I figured it out, but not really and...
+	// 2) DevTools adds there something else (so far I've seen small values around 1 ms) and I can't figure out where this `mysterious_delta`
+	//    comes from. My best guess whould be that it's a `ts.blocked` time, but when DevTools records
+	//    `ResourceReceiveResponse.args.data.timing.dnsStart` (which happens not so often) it doesn't adds up to the `requestTime`
+	timings.requestTime = (startedDateTime + mysterious_delta) / 1000000
 		// < ResourceReceiveResponse.ts
 
 	// point 3
 	// relative nanoseconds
-	// TODO: I guessed it's eq to mark 'Recieve Response', but it is not... - imprecision?
-	timings.receiveHeadersEnd = (first_byte - created) / 1000
+	// And here aformentioned `mysterious_delta` should be substructed for some reason
+	timings.receiveHeadersEnd = (first_byte - created - mysterious_delta) / 1000
 
 	// mark 'Recieve Response'
 	ResourceReceiveResponse.ts = Math.round(first_byte)
