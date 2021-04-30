@@ -131,7 +131,8 @@ const add_request_nodes = (entry) => {
 	// ... probably not, because HAR specs says: 'compression - number of **saved** bytes'
 	const ResourceFinish = node_finish(requestId, entry.response.bodySize, entry.response.content.compression)
 
-	const startedDateTime = Math.round(entry._highResolutionTimestamp * 1000)
+	const startedDateTime = entry._highResolutionTimestamp * 1000
+	// const startedDateTime = Math.round(entry._highResolutionTimestamp * 1000)
 	const ts = mapObject(entry.timings, (val, key) => val === -1 ? 0 : val * 1000)
 	const timings = ResourceReceiveResponse.args.data.timing
 
@@ -188,7 +189,8 @@ const add_request_nodes = (entry) => {
 	timings.receiveHeadersEnd = (first_byte - created - mysterious_delta) / 1000
 
 	// mark 'Recieve Response'
-	ResourceReceiveResponse.ts = Math.round(first_byte)
+	ResourceReceiveResponse.ts = first_byte
+	// ResourceReceiveResponse.ts = Math.round(first_byte)
 		// < finishTime
 
 	// point 4
@@ -198,7 +200,8 @@ const add_request_nodes = (entry) => {
 
 	// point 5, mark 'Finish Loading'
 	// absolute milliseconds
-	ResourceFinish.ts = Math.round(closed)
+	ResourceFinish.ts = closed
+	// ResourceFinish.ts = Math.round(closed)
 
 	// TODO: looks like there can be several 'Recieve Data' marks - `on_data` array?
 	// strangely enougth 'Recieve Data' marks can appear after 'point 4'
@@ -209,9 +212,11 @@ const add_request_nodes = (entry) => {
 
 		const requestId = randomInRange(1_000,2_000)
 		const send = node_send(requestId, 'GET', type + ":" + entry.request.url)
-		send.ts = Math.round(t1)
+		send.ts = t1
+		// send.ts = Math.round(t1)
 		const finish = node_finish(requestId, 1, 1)
-		finish.ts = Math.round(t2)
+		finish.ts = t2
+		// finish.ts = Math.round(t2)
 		return [
 			send,
 			// node_response(requestId, 'text/html', 200),
