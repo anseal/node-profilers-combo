@@ -187,13 +187,19 @@ function new_entry() {
 
 const node_version = process.versions.node
 
+const do_log = false
+const log = (...args) => {
+	if( do_log ) console.log(...args)
+}
+
 export class HarLogger {
 	constructor() {
 		this.map_request_to_entries = new WeakMap()
 		this.http_inspector = new HttpInspector({
 			on_start: (request, url) => {
-				request.__id = randomInRange(10,20)
-				console.log("on_start", request.__id)
+				if( do_log ) request.__id = randomInRange(10,20)
+				log("on_start", request.__id)
+
 				const entry = new_entry()
 				entry.request.url = `${request.protocol}//${request.host}${request.path}` // url.href
 				entry.request.method = request.method
@@ -212,50 +218,49 @@ export class HarLogger {
 				this.map_request_to_entries.set(request, entry)
 			},
 			on_write: (request, ...args) => {
-				console.log("on_write", request.__id, ...args)
+				log("on_write", request.__id, ...args)
 				entry._raw_timings.on_write = performance.now()
 			},
 			on_end: (request, ...args) => {
-				console.log("on_end", request.__id, ...args)
+				log("on_end", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_end = performance.now()
 			},
 			on_close: (request, ...args) => {
-				console.log("on_close", request.__id, ...args)
+				log("on_close", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_close = performance.now()
 			},
 			on_abort: (request, ...args) => {
-				debugger
-				console.log("on_abort", request.__id, ...args)
+				log("on_abort", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_abort = performance.now()
 			},
 			on_finish: (request, ...args) => {
-				console.log("on_finish", request.__id, ...args)
+				log("on_finish", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_finish = performance.now()
 				entry.request.headers = mapHeaders(request.getHeaders(), (value, key) => ({ name: key, value }))
 			},
 			on_timeout: (request, ...args) => {
-				console.log("on_timeout", request.__id, ...args)
+				log("on_timeout", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_timeout = performance.now()
 			},
 			// TODO: оно мне надо? что это вообще?
 			on_connect_req: (request, ...args) => {
-				console.log("on_connect_req", request.__id, ...args)
+				log("on_connect_req", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_connect_req = performance.now()
 			},
 			// TODO: оно мне надо? что это вообще?
 			on_upgrade: (request, ...args) => {
-				console.log("on_upgrade", request.__id, ...args)
+				log("on_upgrade", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_upgrade = performance.now()
 			},
 			on_error: (request, error, ...args) => {
-				console.log("on_error", request.__id, ...args)
+				log("on_error", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_error = performance.now()
 				entry.request._errorFull = error.message
@@ -266,7 +271,7 @@ export class HarLogger {
 				entry.request._error = 'net::' + error.code
 			},
 			on_response: (request, response, ...args) => {
-				console.log("on_response", request.__id, ...args)
+				log("on_response", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_response = performance.now()
 				entry.response.status = response.statusCode
@@ -279,7 +284,7 @@ export class HarLogger {
 				// TODO: entry.response.content.compression = 
 			},
 			on_data: (request, response, data, ...args) => {
-				console.log("on_data", request.__id, ...args)
+				log("on_data", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_data = performance.now()
 				// TODO: not exactly, and maybe need to switch bodySize & content.size
@@ -291,46 +296,45 @@ export class HarLogger {
 				// entry.response.content.size += data.length
 			},
 			on_abort_response: (request, response, ...args) => {
-				console.log("on_abort_response", request.__id, ...args)
+				log("on_abort_response", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_abort_response = performance.now()
 			},
 			on_close_response: (request, response, ...args) => {
-				console.log("on_close_response", request.__id, ...args)
+				log("on_close_response", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_close_response = performance.now()
 			},
 			on_end_response: (request, response, ...args) => {
-				console.log("on_end_response", request.__id, ...args)
+				log("on_end_response", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_end_response = performance.now()
 			},
 			on_error_response: (request, response, ...args) => {
-				console.log("on_error_response", request.__id, ...args)
+				log("on_error_response", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_error_response = performance.now()
 			},
 			on_socket: (request, socket, ...args) => {
 				// socket.encrypted: true // secureConnecting:true
-				console.log("on_socket", request.__id, ...args)
+				log("on_socket", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_socket = performance.now()
 			},
 			on_lookup: (request, socket, error, address, ...args) => {
 				// TODO: if( error )
-				console.log("on_lookup", request.__id, ...args)
+				log("on_lookup", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_lookup = performance.now()
 				entry.serverIPAddress = address
 			},
 			on_connect: (request, socket, ...args) => {
-				console.log("on_connect", request.__id, ...args)
+				log("on_connect", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_connect = performance.now()
 			},
 			on_secureConnect: (request, socket, ...args) => {
-				debugger
-				console.log("on_secureConnect", request.__id, ...args)
+				log("on_secureConnect", request.__id, ...args)
 				const entry = this.map_request_to_entries.get(request)
 				entry._raw_timings.on_secureConnect = performance.now()
 			},
