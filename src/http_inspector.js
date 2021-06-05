@@ -182,3 +182,36 @@ export class HttpInspector {
 	start() { this.inspect = true }
 	stop() { this.inspect = false }
 }
+
+// TODO: ???
+// req.on('response', (res) => {
+// 	res.once('readable', () => {
+// 	  eventTimes.firstByteAt = getTimeNotASubjectOfClockDrift();
+// 	});
+// 	(function consumeStreamSoEndEventAlwaysFire() {
+// 	  res.on('data', () => {});
+// 	}());
+
+// TODO: http, https, ...http2: https://nodejs.org/api/http2.html
+// also the most low level `Net.connect`
+
+// TODO: https://github.com/sfninja/thetool/blob/master/lib/Tool.js
+// function createTool(name, toolOptions, connection) {
+// 	if (name === 'memorysampling')
+// 	  return new MemorySamplingProfiler(connection, toolOptions);
+// 	if (name === 'memoryallocation')
+// 	  return new MemoryAllocationProfiler(connection, toolOptions);
+// 	if (name === 'heapsnapshot')
+// 	  return new HeapSnapshotTool(connection, toolOptions);
+// 	if (name === 'coverage')
+// 	  return new CoverageProfiler(connection, toolOptions);
+// 	if (name === 'cpu')
+// 	  return new CPUProfiler(connection, toolOptions);
+// 	if (name === 'type')
+// 	  return new TypeProfiler(connection, toolOptions);
+// 	if (name === 'tracing')
+// 	  return new Tracing(connection, toolOptions);
+//   }
+
+// TODO: вроде как можно использовать для вдохновения перехватов входящих запросов https://github.com/olmps/web-sniffer
+// не понял только почему там какие-то заморочки с сертификатами, такое наверное только если это полноценный прокси может быть
