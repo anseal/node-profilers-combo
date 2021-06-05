@@ -159,25 +159,27 @@ function new_entry() {
 		},
 		_raw_timings: {
 			on_start: undefined,
+			on_socket: undefined,
 			on_write: undefined, // TODO: remove?
 			on_end: undefined,
-			on_close: undefined,
-			on_abort: undefined,
+			on_lookup: undefined,
+			on_connect: undefined,
+			on_secureConnect: undefined,
 			on_finish: undefined,
+			on_response: undefined,
+			on_data: undefined, // TODO: remove? or save as array?
+			on_end_response: undefined,
+			on_close: undefined,
+			on_close_response: undefined,
+
+			// TODO: sort... if possible. e.g for `on_abort` it is not
+			on_abort: undefined,
 			on_timeout: undefined,
 			on_connect_req: undefined,
 			on_upgrade: undefined,
 			on_error: undefined,
-			on_response: undefined,
-			on_data: undefined, // TODO: remove?
 			on_abort_response: undefined,
-			on_close_response: undefined,
-			on_end_response: undefined,
 			on_error_response: undefined,
-			on_socket: undefined,
-			on_lookup: undefined,
-			on_connect: undefined,
-			on_secureConnect: undefined,
 		},
 		serverIPAddress: undefined,
 		// connection: "id", // Unique ID of the parent TCP/IP connection
