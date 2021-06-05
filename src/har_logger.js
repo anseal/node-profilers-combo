@@ -189,7 +189,7 @@ function new_entry() {
 
 const node_version = process.versions.node
 
-const do_log = false
+const do_log = true
 const log = (...args) => {
 	if( do_log ) console.log(...args)
 }
@@ -397,33 +397,50 @@ export class HarLogger {
 			if( ts.on_error ) { // dns error // TODO: other errors
 				// TODO:
 				//	```
-				// 	entry.timings.connect = -1
-				// 	entry.time = ts.on_lookup - ts.on_start
+					entry.timings.connect = -1
+					entry.time = ts.on_lookup - ts.on_start
 				//	```
 				// time until `on_error` probably doesn't matter - it's just some JS delays, but
 				// `entry.timings.connect !== -1` shows up in the DevTools and confuses
 				// I can just set `connect = -1`, but the `entry.time` won't be a sum of all timings, 
 				// which breaks har spec, but DevTools do not care, so maybe it's OK
 				entry.timings.ssl = -1
-				entry.timings.connect = ts.on_error - ts.on_lookup
+				// entry.timings.connect = ts.on_error - ts.on_lookup
 				entry.timings.send = -1
 				entry.timings.wait = -1
 				entry.timings.receive = -1
-				entry.time = ts.on_error - ts.on_start
+				// entry.time = ts.on_error - ts.on_start
 			} else if( ts.on_secureConnect ) {
-				entry.timings.ssl = ts.on_secureConnect - ts.on_connect // If this field is defined then the time is also included in the `connect` field
-				entry.timings.connect = ts.on_secureConnect - ts.on_lookup // connect would be -1 for requests which re-use an existing connection.
-				entry.timings.send = ts.on_finish - ts.on_secureConnect
-				entry.timings.wait = ts.on_response - ts.on_finish
-				entry.timings.receive = ts.on_end_response - ts.on_response
-				entry.time = ts.on_end_response - ts.on_start
+				// If this field is defined then the time is also included in the `connect` field
+				entry.timings.ssl = ts.on_secureConnect - ts.on_connect
+				// TODO: > connect would be -1 for requests which re-use an existing connection.
+				entry.timings.connect = ts.on_secureConnect - ts.on_lookup
 			} else {
 				entry.timings.connect = ts.on_connect - ts.on_lookup
-				entry.timings.send = ts.on_finish - ts.on_connect
-				entry.timings.wait = ts.on_response - ts.on_finish
-				entry.timings.receive = ts.on_end_response - ts.on_response
-				entry.time = ts.on_end_response - ts.on_start
 			}
+
+			if( ts.on_finish ) {
+				// TODO: `on_connect` && `on_secureConnect` can be `undefined` in case of keep-alive ???
+				entry.timings.send = ts.on_finish - (ts.on_secureConnect||ts.on_connect)
+			}
+			if( ts.on_response ) {
+				entry.timings.wait = ts.on_response - ts.on_finish
+			}
+			if( ts.on_error ) {
+				// in case of errors in request stage - receive stage is obviously 0
+				entry.timings.receive = 0
+			} else if( ts.on_error_response ) {
+				// `on_error_response !== undefined` only if `on_response !== undefined`
+				// because 'error' listener added after `on_response` if set
+				entry.timings.receive = ts.on_error_response - ts.on_response
+			}
+			// in case of error 'end' on `response` is not fired and `on_end_response` is `undefined`.
+			// `on_close` is always fired // TODO: well... if we wait enougth... and if we don't?
+			// but it can be too far from the actual time of request's ending,
+			// there're some delays internal to Node.js and not to request itself
+			// so I choose to use more complex code with error's times
+			// TODO: || ts.on_abort || ts.on_abort_response ???
+			entry.time = (ts.on_end_response || ts.on_error || ts.on_error_response) - ts.on_start
 		})
 
 		return har

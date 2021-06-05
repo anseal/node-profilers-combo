@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="theme-color" content="#000000">
+		<title>Combo</title>
+	</head>
+	<body>
+		<div id="root">
+			<button id="run">run</button>
+		</div>
+	</body>
+	<script>
+		document.getElementById('run').addEventListener('click', async () => {
+			// const results = await (await fetch(window.location.href + "start/")).json()
+			const results = await (await fetch('https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Monasterio_Khor_Virap%2C_Armenia%2C_2016-10-01%2C_DD_25.jpg/320px-Monasterio_Khor_Virap%2C_Armenia%2C_2016-10-01%2C_DD_25.jpg')).text()
+			console.log(results.length)
+		})
+	</script>
+</html>
