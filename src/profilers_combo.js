@@ -11,10 +11,10 @@ export class ProfilersCombo {
 		this.inspector = new inspector.Session()
 		this.post = util.promisify(this.inspector.post.bind(this.inspector))
 	}
-	async seconds(delay) {
+	async seconds(delay, path) {
 		await this.start()
 		await new Promise(resolve => setTimeout(resolve, delay * 1000))
-		return await this.stop()
+		return await this.stop(path)
 	}
 	async start() {
 		this.profiling_started = performance.now() // TODO: should it be here or after `post`s... which one?
@@ -30,6 +30,9 @@ export class ProfilersCombo {
 		try {
 			const { profile } = await this.post('Profiler.stop')
 			const har = this.har_logger.stop()
+			if( typeof path !== 'string' ) {
+				throw new Error('expected `path` to save logs')
+			}
 			// timestamps of `inspector` and `performance.now()` have different starting value
 			// TODO: try `hrtimer`
 			profile.startTime = Math.round(this.profiling_started * 1000)
